@@ -1,13 +1,13 @@
-import parser from "./parser";
-import { Value } from "slate";
-import { Record } from "immutable";
-import { encode } from "./urls";
-import { escapeMarkdownChars } from "./utils";
+import parser from './parser'
+import { Value } from 'slate'
+import { Record } from 'immutable'
+import { encode } from './urls'
+import { escapeMarkdownChars } from './utils'
 
 const String = new Record({
-  object: "string",
-  text: ""
-});
+  object: 'string',
+  text: ''
+})
 
 /**
  * Rules to (de)serialize nodes.
@@ -15,144 +15,144 @@ const String = new Record({
  * @type {Object}
  */
 
-let tableHeader = "";
+let tableHeader = ''
 
 const RULES = [
   {
-    serialize(obj, children) {
-      if (obj.object === "string") {
-        return children;
+    serialize (obj, children) {
+      if (obj.object === 'string') {
+        return children
       }
     }
   },
   {
-    serialize(obj, children, document) {
-      if (obj.object !== "block") return;
-      let parent = document.getParent(obj.key);
+    serialize (obj, children, document) {
+      if (obj.object !== 'block') return
+      const parent = document.getParent(obj.key)
 
       switch (obj.type) {
-        case "table":
-          tableHeader = "";
+        case 'table':
+          tableHeader = ''
 
           // trim removes trailing newline
-          return children.trim();
-        case "table-head": {
-          switch (obj.getIn(["data", "align"])) {
-            case "left":
-              tableHeader += "|:--- ";
-              break;
-            case "center":
-              tableHeader += "|:---:";
-              break;
-            case "right":
-              tableHeader += "| ---:";
-              break;
+          return children.trim()
+        case 'table-head': {
+          switch (obj.getIn(['data', 'align'])) {
+            case 'left':
+              tableHeader += '|:--- '
+              break
+            case 'center':
+              tableHeader += '|:---:'
+              break
+            case 'right':
+              tableHeader += '| ---:'
+              break
             default:
-              tableHeader += "| --- ";
+              tableHeader += '| --- '
           }
-          return `| ${children} `;
+          return `| ${children} `
         }
-        case "table-row":
-          let output = "";
+        case 'table-row':
+          let output = ''
           if (tableHeader) {
-            output = `${tableHeader}|\n`;
-            tableHeader = "";
+            output = `${tableHeader}|\n`
+            tableHeader = ''
           }
-          return `${children}|\n${output}`;
-        case "table-cell":
-          return `| ${children} `;
-        case "paragraph":
-          return children;
-        case "code": {
-          const language = obj.getIn(["data", "language"]) || "";
-          return `\`\`\`${language}\n${children}\n\`\`\``;
+          return `${children}|\n${output}`
+        case 'table-cell':
+          return `| ${children} `
+        case 'paragraph':
+          return children
+        case 'code': {
+          const language = obj.getIn(['data', 'language']) || ''
+          return `\`\`\`${language}\n${children}\n\`\`\``
         }
-        case "code-line":
-          return `${children}\n`;
-        case "block-quote":
+        case 'code-line':
+          return `${children}\n`
+        case 'block-quote':
           // Handle multi-line blockquotes
-          return children.split("\n").map(text => `> ${text}`).join("\n");
-        case "todo-list":
-        case "bulleted-list":
-        case "ordered-list": {
+          return children.split('\n').map(text => `> ${text}`).join('\n')
+        case 'todo-list':
+        case 'bulleted-list':
+        case 'ordered-list': {
           // root list
           if (parent === document) {
-            return children;
+            return children
           }
 
           // nested list
-          return `\n${children.replace(/\n+$/gm, "").replace(/^/gm, "   ")}`;
+          return `\n${children.replace(/\n+$/gm, '').replace(/^/gm, '   ')}`
         }
-        case "list-item": {
+        case 'list-item': {
           switch (parent.type) {
-            case "ordered-list":
-              return `1. ${children}\n`;
-            case "todo-list":
-              let checked = obj.getIn(["data", "checked"]);
-              let box = checked ? "[x]" : "[ ]";
-              return `${box} ${children}\n`;
+            case 'ordered-list':
+              return `1. ${children}\n`
+            case 'todo-list':
+              const checked = obj.getIn(['data', 'checked'])
+              const box = checked ? '[x]' : '[ ]'
+              return `${box} ${children}\n`
             default:
-            case "bulleted-list":
-              return `* ${children}\n`;
+            case 'bulleted-list':
+              return `* ${children}\n`
           }
         }
-        case "heading1":
-          return `# ${children}\n`;
-        case "heading2":
-          return `\n## ${children}\n`;
-        case "heading3":
-          return `\n### ${children}\n`;
-        case "heading4":
-          return `\n#### ${children}\n`;
-        case "heading5":
-          return `\n##### ${children}\n`;
-        case "heading6":
-          return `\n###### ${children}\n`;
-        case "horizontal-rule":
-          return `---`;
-        case "image":
-          const alt = obj.getIn(["data", "alt"]) || "";
-          const src = encode(obj.getIn(["data", "src"]) || "");
-          return `![${alt}](${src})`;
+        case 'heading1':
+          return `# ${children}\n`
+        case 'heading2':
+          return `\n## ${children}\n`
+        case 'heading3':
+          return `\n### ${children}\n`
+        case 'heading4':
+          return `\n#### ${children}\n`
+        case 'heading5':
+          return `\n##### ${children}\n`
+        case 'heading6':
+          return `\n###### ${children}\n`
+        case 'horizontal-rule':
+          return '---'
+        case 'image':
+          const alt = obj.getIn(['data', 'alt']) || ''
+          const src = encode(obj.getIn(['data', 'src']) || '')
+          return `![${alt}](${src})`
       }
     }
   },
   {
-    serialize(obj, children) {
-      if (obj.type === "hashtag") return children;
+    serialize (obj, children) {
+      if (obj.type === 'hashtag') return children
     }
   },
   {
-    serialize(obj, children) {
-      if (obj.type === "link") {
-        const href = encode(obj.getIn(["data", "href"]) || "");
-        const text = children.trim() || href;
-        return href ? `[${text}](${href})` : text;
+    serialize (obj, children) {
+      if (obj.type === 'link') {
+        const href = encode(obj.getIn(['data', 'href']) || '')
+        const text = children.trim() || href
+        return href ? `[${text}](${href})` : text
       }
     }
   },
   {
-    serialize(obj, children, open, close) {
-      if (obj.object !== "mark") return;
-      if (!children) return;
+    serialize (obj, children, open, close) {
+      if (obj.object !== 'mark') return
+      if (!children) return
 
       switch (obj.type) {
-        case "bold":
-          return `${open ? "**" : ""}${children}${close ? "**" : ""}`;
-        case "italic":
-          return `${open ? "_" : ""}${children}${close ? "_" : ""}`;
-        case "code":
-          return `\`${children}\``;
-        case "inserted":
-          return `++${children}++`;
-        case "deleted":
-          return `~~${children}~~`;
-        case "underlined":
-          return `__${children}__`;
+        case 'bold':
+          return `${open ? '**' : ''}${children}${close ? '**' : ''}`
+        case 'italic':
+          return `${open ? '_' : ''}${children}${close ? '_' : ''}`
+        case 'code':
+          return `\`${children}\``
+        case 'inserted':
+          return `++${children}++`
+        case 'deleted':
+          return `~~${children}~~`
+        case 'underlined':
+          return `__${children}__`
       }
     }
   }
-];
+]
 
 /**
  * Markdown serializer.
@@ -169,12 +169,12 @@ class Markdown {
    * @return {Markdown} serializer
    */
 
-  constructor(options = {}) {
-    this.rules = [...(options.rules || []), ...RULES];
+  constructor (options = {}) {
+    this.rules = [...(options.rules || []), ...RULES]
 
-    this.serializeNode = this.serializeNode.bind(this);
-    this.serializeLeaves = this.serializeLeaves.bind(this);
-    this.serializeString = this.serializeString.bind(this);
+    this.serializeNode = this.serializeNode.bind(this)
+    this.serializeLeaves = this.serializeLeaves.bind(this)
+    this.serializeString = this.serializeString.bind(this)
   }
 
   /**
@@ -184,15 +184,15 @@ class Markdown {
    * @return {String} markdown
    */
 
-  serialize(state) {
-    const { document } = state;
+  serialize (state) {
+    const { document } = state
     const elements = document.nodes.map(node =>
       this.serializeNode(node, document)
-    );
-    const output = elements.join("\n");
+    )
+    const output = elements.join('\n')
 
     // trim beginning whitespace
-    return output.replace(/^\s+/g, "");
+    return output.replace(/^\s+/g, '')
   }
 
   /**
@@ -202,34 +202,34 @@ class Markdown {
    * @return {String}
    */
 
-  serializeNode(node, document, openMarks = {}, prevNode, nextNode) {
-    if (node.object == "text") {
+  serializeNode (node, document, openMarks = {}, prevNode, nextNode) {
+    if (node.object == 'text') {
       const inCodeBlock = !!document.getClosest(
         node.key,
-        n => n.type === "code"
-      );
-      const inCodeMark = !!(node.marks || []).filter(mark => mark.type === "code")
-        .size;
-      return this.serializeLeaves(node, !inCodeBlock && !inCodeMark, openMarks, prevNode, nextNode);
+        n => n.type === 'code'
+      )
+      const inCodeMark = !!(node.marks || []).filter(mark => mark.type === 'code')
+        .size
+      return this.serializeLeaves(node, !inCodeBlock && !inCodeMark, openMarks, prevNode, nextNode)
     }
 
     const children = node.nodes
       .map((childNode, index) => {
-        const serialized = this.serializeNode(childNode, document, openMarks, node.nodes.get(index - 1), node.nodes.get(index + 1));
+        const serialized = this.serializeNode(childNode, document, openMarks, node.nodes.get(index - 1), node.nodes.get(index + 1))
         return (
-          (serialized && serialized.join ? serialized.join("") : serialized) ||
-          ""
-        );
+          (serialized && serialized.join ? serialized.join('') : serialized) ||
+          ''
+        )
       })
       .join(
         // Special case for blockquotes, children in blockquotes are separated by new lines
-        node.type === "block-quote" ? "\n" : ""
-      );
+        node.type === 'block-quote' ? '\n' : ''
+      )
 
     for (const rule of this.rules) {
-      if (!rule.serialize) continue;
-      const ret = rule.serialize(node, children, document);
-      if (ret) return ret;
+      if (!rule.serialize) continue
+      const ret = rule.serialize(node, children, document)
+      if (ret) return ret
     }
   }
 
@@ -240,17 +240,17 @@ class Markdown {
    * @return {String}
    */
 
-  serializeLeaves(leaves, escape = true, openMarks, prevNode, nextNode) {
-    let leavesText = leaves.text;
+  serializeLeaves (leaves, escape = true, openMarks, prevNode, nextNode) {
+    let leavesText = leaves.text
     if (escape) {
       // escape markdown characters
-      leavesText = escapeMarkdownChars(leavesText);
+      leavesText = escapeMarkdownChars(leavesText)
     }
-    const string = new String({ text: leavesText });
-    let { marks } = leaves;
-    const text = this.serializeString(string);
+    const string = new String({ text: leavesText })
+    let { marks } = leaves
+    const text = this.serializeString(string)
 
-    if (!marks) return text;
+    if (!marks) return text
 
     const prevNodeMarks = prevNode && (prevNode.object === 'text') && prevNode.marks
       ? prevNode.marks.reduce((hash, mark) => {
@@ -258,14 +258,14 @@ class Markdown {
 
         return hash
       }, {})
-      : {};
+      : {}
     const nextNodeMarks = nextNode && (nextNode.object === 'text') && nextNode.marks
       ? nextNode.marks.reduce((hash, mark) => {
         hash[mark.type] = true
 
         return hash
       }, {})
-      : {};
+      : {}
 
     // The order of items in the `marks` array matters. The marks that
     // transitioned from the previous node should go last. For some reason,
@@ -281,17 +281,17 @@ class Markdown {
     }
 
     return marks.reduce((children, mark) => {
-      const close = !nextNodeMarks[mark.type];
-      const open = !openMarks[mark.type];
+      const close = !nextNodeMarks[mark.type]
+      const open = !openMarks[mark.type]
 
-      openMarks[mark.type] = nextNodeMarks[mark.type];
+      openMarks[mark.type] = nextNodeMarks[mark.type]
 
       for (const rule of this.rules) {
-        if (!rule.serialize) continue;
-        const ret = rule.serialize(mark, children, open, close);
-        if (ret) return ret;
+        if (!rule.serialize) continue
+        const ret = rule.serialize(mark, children, open, close)
+        if (ret) return ret
       }
-    }, text);
+    }, text)
   }
 
   /**
@@ -301,11 +301,11 @@ class Markdown {
    * @return {String}
    */
 
-  serializeString(string) {
+  serializeString (string) {
     for (const rule of this.rules) {
-      if (!rule.serialize) continue;
-      const ret = rule.serialize(string, string.text);
-      if (ret) return ret;
+      if (!rule.serialize) continue
+      const ret = rule.serialize(string, string.text)
+      if (ret) return ret
     }
   }
 
@@ -315,10 +315,10 @@ class Markdown {
    * @param {String} markdown
    * @return {State} state
    */
-  deserialize(markdown) {
-    const document = parser.parse(markdown);
-    return Value.fromJSON({ document });
+  deserialize (markdown) {
+    const document = parser.parse(markdown)
+    return Value.fromJSON({ document })
   }
 }
 
-export default Markdown;
+export default Markdown
