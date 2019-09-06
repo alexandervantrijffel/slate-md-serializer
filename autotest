@@ -1,0 +1,1 @@
+reflex -r '\.js$' -s -- sh -c 'yarn run test'  

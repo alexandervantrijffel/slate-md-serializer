@@ -2050,6 +2050,40 @@ Array [
 ]
 `;
 
+exports[`parses span 1`] = `
+Array [
+  Object {
+    "data": Object {},
+    "nodes": Array [
+      Object {
+        "marks": Array [],
+        "object": "text",
+        "text": "This is just a sentence with a <span color='",
+      },
+      Object {
+        "data": Object {},
+        "nodes": Array [
+          Object {
+            "marks": Array [],
+            "object": "text",
+            "text": "#F0F0F0",
+          },
+        ],
+        "object": "inline",
+        "type": "hashtag",
+      },
+      Object {
+        "marks": Array [],
+        "object": "text",
+        "text": "'>span</span> yeye",
+      },
+    ],
+    "object": "block",
+    "type": "paragraph",
+  },
+]
+`;
+
 exports[`parses tables 1`] = `
 Array [
   Object {

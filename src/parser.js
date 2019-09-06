@@ -63,6 +63,7 @@ var defaults = {
 var block = {
   newline: /^\n+/,
   code: /^( {4}[^\n]+\n*)+/,
+  // span: /^(<span[^>]*>[^>]*<\/span>)/,
   fences: noop,
   hr: /^( *[-*_]){3,} *(?:\n|$)/,
   heading: /^ *(#{1,6}) *([^\n]+?) *#* *(?:\n|$)/,
@@ -191,6 +192,7 @@ Lexer.prototype.token = function (src, top, bq) {
   src = src.replace(/^\n/, '')
 
   while (src) {
+    // console.error("testing src", src);
     // newline
     if ((cap = this.rules.newline.exec(src))) {
       src = src.substring(cap[0].length)
@@ -205,6 +207,16 @@ Lexer.prototype.token = function (src, top, bq) {
         }
       }
     }
+
+    // if ((cap = this.rules.span.exec(src))) {
+    //   src = src.substring(cap[0].length);
+    //   console.error("pushing ", cap[0]);
+    //   this.tokens.push({
+    //     type: "span",
+    //     text: cap[0]
+    //   });
+    //   continue;
+    // }
 
     // code
     if ((cap = this.rules.code.exec(src))) {
@@ -474,6 +486,7 @@ var inline = {
   escape: /^\\([\\`*{}\[\]()#+\-.!_>])/,
   link: /^!?\[(inside)\]\(href\)/,
   hashtag,
+  span: /^<span[^>]*>([^>]*)<\/span>/,
   reflink: /^!?\[(inside)\]\s*\[([^\]]*)\]/,
   nolink: /^!?\[((?:\[[^\]]*\]|[^\[\]])*)\]/,
   strong: /^\*\*([\s\S]+?)\*\*(?!\*)/,
@@ -651,7 +664,9 @@ InlineLexer.prototype.parse = function (src, trail = []) {
     // strong
     if ((cap = this.rules.strong.exec(src))) {
       src = src.substring(cap[0].length)
-      const rendered = this.renderer.strong(this.parse(cap[2] || cap[1], trail.concat('strong')))
+      const rendered = this.renderer.strong(
+        this.parse(cap[2] || cap[1], trail.concat('strong'))
+      )
       this.applyTrailMarks(rendered, trail, ['em'])
       out.push(rendered)
       continue
@@ -660,9 +675,32 @@ InlineLexer.prototype.parse = function (src, trail = []) {
     // em
     if ((cap = this.rules.em.exec(src))) {
       src = src.substring(cap[0].length)
-      const rendered = this.renderer.em(this.parse(cap[2] || cap[1], trail.concat('em')))
+      const rendered = this.renderer.em(
+        this.parse(cap[2] || cap[1], trail.concat('em'))
+      )
       this.applyTrailMarks(rendered, trail, ['strong'])
       out.push(rendered)
+      continue
+    }
+
+    // span
+    if ((cap = this.rules.span.exec(src))) {
+      console.log('rendering span')
+      // src = src.substring(cap[0].length);
+      // out.push(this.renderer.span(cap[2]));
+      // continue;
+
+      // src = src.substring(cap[0].length);
+      // const rendered = this.renderer.span(
+      //   this.parse(cap[2] || cap[1], trail.concat("span"))
+      // );
+      // this.applyTrailMarks(rendered, trail, ["span"]);
+      // out.push(rendered);
+      // continue;
+      //
+
+      src = src.substring(cap[0].length)
+      out.push(this.renderer.span(this.parse(cap[2] || cap[1])))
       continue
     }
 
@@ -735,7 +773,7 @@ Renderer.prototype.groupTextInLeaves = function (childNode) {
   const output = node.reduce((acc, current) => {
     if (current.text) {
       const previous = acc.slice(-1)[0]
-      const previousMarks = (previous && previous.object === 'text')
+      const previousMarks = previous && previous.object === 'text'
         ? (previous.marks || []).map(({ type }) => type).join('')
         : null
       const currentMarks = previousMarks !== null
@@ -745,9 +783,7 @@ Renderer.prototype.groupTextInLeaves = function (childNode) {
       if (previousMarks !== null && previousMarks === currentMarks) {
         previous.text += current.text
       } else {
-        acc.push(
-          assign({}, current, { object: 'text' })
-        )
+        acc.push(assign({}, current, { object: 'text' }))
       }
 
       return acc
@@ -761,6 +797,25 @@ Renderer.prototype.groupTextInLeaves = function (childNode) {
 
   if (!output.length) return EMPTY_PARAGRAPH_NODES
   return output
+}
+
+Renderer.prototype.span = function (childNode, language) {
+  var data = {}
+
+  if (language) {
+    data.language = language
+  }
+  console.error('childnode', childNode)
+  // console.error("childnode", childNode[0].leaves[0].text);
+  // console.error("group text in leaves", this.groupTextInLeaves(childNode));
+  return {
+    object: 'block',
+    type: 'span',
+    // data,
+    nodes: this.groupTextInLeaves(childNode)
+    // [{ object: "text", text: childNode[0].leaves[0].text }]
+    // this.groupTextInLeaves(childNode)
+  }
 }
 
 Renderer.prototype.code = function (childNode, language) {
@@ -867,6 +922,17 @@ Renderer.prototype.underlined = function (childNode) {
       node.marks.push({ type: 'underlined' })
     } else {
       node.marks = [{ type: 'underlined' }]
+    }
+    return node
+  })
+}
+
+Renderer.prototype.span = function (childNode) {
+  return childNode.map(node => {
+    if (node.marks) {
+      node.marks.push({ type: 'span' })
+    } else {
+      node.marks = [{ type: 'span' }]
     }
     return node
   })

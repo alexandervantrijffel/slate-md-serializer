@@ -26,6 +26,15 @@ function assertSymmetry (text, value) {
   return rendered
 }
 
+test('parses span', () => {
+  const text =
+    "This is just a sentence with a <span color='#F0F0F0'>span</span> yeye"
+  const nodes = getNodes(text)
+  console.error('GOT: ', JSON.stringify(nodes))
+  expect(nodes).toMatchSnapshot()
+  assertSymmetry(text, true)
+})
+
 test('parses paragraph', () => {
   const text = 'This is just a sentence'
   expect(getNodes(text)).toMatchSnapshot()
@@ -559,13 +568,15 @@ test('parses link within mark', () => {
 })
 
 test('parses link with encoded characters', () => {
-  const text = '[kibana](https://example.com/app/kibana#/discover?_g=%28refreshInterval:%28%27$$hashKey%27:%27object:1596%27,display:%2710%20seconds%27,pause:!f,section:1,value:10000%29,time:%28from:now-15m,mode:quick,to:now%29%29&_a=%28columns:!%28metadata.step,message,metadata.attempt_f,metadata.tries_f,metadata.error_class,metadata.url%29,index:%27logs-%27,interval:auto,query:%28query_string:%28analyze_wildcard:!t,query:%27metadata.at:%20Stepper*%27%29%29,sort:!%28time,desc%29%29)'
+  const text =
+    '[kibana](https://example.com/app/kibana#/discover?_g=%28refreshInterval:%28%27$$hashKey%27:%27object:1596%27,display:%2710%20seconds%27,pause:!f,section:1,value:10000%29,time:%28from:now-15m,mode:quick,to:now%29%29&_a=%28columns:!%28metadata.step,message,metadata.attempt_f,metadata.tries_f,metadata.error_class,metadata.url%29,index:%27logs-%27,interval:auto,query:%28query_string:%28analyze_wildcard:!t,query:%27metadata.at:%20Stepper*%27%29%29,sort:!%28time,desc%29%29)'
   expect(getNodes(text)).toMatchSnapshot()
   assertSymmetry(text, true)
 })
 
 test('parses link with percent symbol', () => {
-  const text = '[kibana](https://example.com/app/kibana#/visualize/edit/Requests-%)'
+  const text =
+    '[kibana](https://example.com/app/kibana#/visualize/edit/Requests-%)'
   expect(getNodes(text)).toMatchSnapshot()
   assertSymmetry(text, true)
 })

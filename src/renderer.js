@@ -149,6 +149,8 @@ const RULES = [
           return `~~${children}~~`
         case 'underlined':
           return `__${children}__`
+        case 'span':
+          return `<span todo extend renderer>${children}</span>`
       }
     }
   }
@@ -208,14 +210,26 @@ class Markdown {
         node.key,
         n => n.type === 'code'
       )
-      const inCodeMark = !!(node.marks || []).filter(mark => mark.type === 'code')
-        .size
-      return this.serializeLeaves(node, !inCodeBlock && !inCodeMark, openMarks, prevNode, nextNode)
+      const inCodeMark = !!(node.marks || [])
+        .filter(mark => mark.type === 'code').size
+      return this.serializeLeaves(
+        node,
+        !inCodeBlock && !inCodeMark,
+        openMarks,
+        prevNode,
+        nextNode
+      )
     }
 
     const children = node.nodes
       .map((childNode, index) => {
-        const serialized = this.serializeNode(childNode, document, openMarks, node.nodes.get(index - 1), node.nodes.get(index + 1))
+        const serialized = this.serializeNode(
+          childNode,
+          document,
+          openMarks,
+          node.nodes.get(index - 1),
+          node.nodes.get(index + 1)
+        )
         return (
           (serialized && serialized.join ? serialized.join('') : serialized) ||
           ''
@@ -252,14 +266,18 @@ class Markdown {
 
     if (!marks) return text
 
-    const prevNodeMarks = prevNode && (prevNode.object === 'text') && prevNode.marks
+    const prevNodeMarks = prevNode &&
+      prevNode.object === 'text' &&
+      prevNode.marks
       ? prevNode.marks.reduce((hash, mark) => {
         hash[mark.type] = true
 
         return hash
       }, {})
       : {}
-    const nextNodeMarks = nextNode && (nextNode.object === 'text') && nextNode.marks
+    const nextNodeMarks = nextNode &&
+      nextNode.object === 'text' &&
+      nextNode.marks
       ? nextNode.marks.reduce((hash, mark) => {
         hash[mark.type] = true
 

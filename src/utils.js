@@ -1,4 +1,4 @@
-export function escapeMarkdownChars (text: string): string {
+export function escapeMarkdownChars (text) {
   let result = text
 
   // First replace all backslashes because we are adding backslashes in this function
